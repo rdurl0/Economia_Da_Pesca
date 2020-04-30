@@ -2,9 +2,7 @@ library(RSelenium)
 library(XML)
 library(tidyverse)
 
-tabela_final <- function(ano,
-                         my_dir = tempdir(),
-                         delete_old = TRUE) {
+tabela_final <- function(ano, my_dir = tempdir(), delete_old = TRUE) {
   
   # my_dir: onde o .csv será salvo ---------------------------------------------
   eCaps <- list(
@@ -13,7 +11,7 @@ tabela_final <- function(ano,
         "profile.default_content_settings.popups" = 0L,
         "download.prompt_for_download" = FALSE,
         "download.default_directory" = my_dir
-      )
+           )
       )
   )
   
