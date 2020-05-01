@@ -1,6 +1,6 @@
 ---
 title: "Modelo de oferta de pescado"
-output: html_document
+output: github_document
 ---
 
 ```{r setup, include=FALSE}
