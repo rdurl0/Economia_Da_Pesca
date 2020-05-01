@@ -186,4 +186,6 @@ for(i in 1998:2020) {
   Sys.sleep(5)
 }
 
-# write_rds(propesq, "../data/propesq.rds")
+propesq <- mutate(periodo = sprintf("%d-%02d-01", ano, mes) %>% lubridate::ymd())
+
+#write_rds(propesq, "./data/propesq.rds")

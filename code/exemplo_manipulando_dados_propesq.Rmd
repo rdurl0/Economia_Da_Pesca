@@ -29,9 +29,7 @@ library(patchwork)
 
 **Dataset**
 ```{r}
-propesq <- "../data/propesq.rds" %>%
-  read_rds() %>%
-  mutate(periodo = sprintf("%d-%02d-01", ano, mes) %>% lubridate::ymd())
+propesq <- "../data/propesq.rds" %>% read_rds()
 ```
 
 **Tema para gráfico**
