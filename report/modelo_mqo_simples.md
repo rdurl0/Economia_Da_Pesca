@@ -94,98 +94,72 @@ preço sobre a quantidade ofertada deste bem.
 
 Os dados utilizados são do Propesq.
 
+<details>
+
+<summary> Ver Código </summary>
+
 ``` r
 library(tidyverse)
 library(kableExtra)
 
 propesq <- "../data/propesq.rds" %>% read_rds()
 
-corvina <- propesq %>%
-  filter(valor_estimado > 0 & pescado == "Corvina") %>%
-  mutate(preco = valor_estimado / qtd_descargas)
+corvina <- propesq %>% 
+  filter(valor_estimado > 0 & pescado == "Corvina" & ano > 2007)
 
-corvina
-```
-
-    ## # A tibble: 8,803 x 12
-    ##      ano   mes municipio aparelho_de_pes~ nivel_taxonomico pescado    kg
-    ##    <int> <int> <chr>     <chr>            <chr>            <chr>   <dbl>
-    ##  1  1998     1 Cananéia  cerco-fixo       Peixe Ósseo      Corvina    18
-    ##  2  1998     1 Cananéia  emalhe-de-fundo  Peixe Ósseo      Corvina  1339
-    ##  3  1998     1 Cananéia  espinhéis-diver~ Peixe Ósseo      Corvina    13
-    ##  4  1998     1 Cananéia  espinhel-de-fun~ Peixe Ósseo      Corvina    48
-    ##  5  1998     1 Cananéia  multi-artes      Peixe Ósseo      Corvina     4
-    ##  6  1998     1 Ilha Com~ emalhe-de-fundo  Peixe Ósseo      Corvina    83
-    ##  7  1998     1 Ilha Com~ emalhe-de-super~ Peixe Ósseo      Corvina    35
-    ##  8  1998     2 Cananéia  arrasto-duplo    Peixe Ósseo      Corvina     8
-    ##  9  1998     2 Cananéia  cerco-fixo       Peixe Ósseo      Corvina    12
-    ## 10  1998     2 Cananéia  emalhe-de-fundo  Peixe Ósseo      Corvina  1257
-    ## # ... with 8,793 more rows, and 5 more variables: qtd_descargas <int>,
-    ## #   qtd_unidades_produtivas <int>, valor_estimado <dbl>, periodo <date>,
-    ## #   preco <dbl>
-
-``` r
-corvina %>%
-  filter(ano > 2007) %>%
+qtd <- corvina %>% 
+  #filter(ano > 2015) %>% 
+  group_by(pescado, periodo) %>%
+  mutate(kg = sum(kg)) %>%
   ggplot() +
-  geom_boxplot(aes(x = factor(ano), y = preco/10, color = factor(ano)), show.legend = F) +
-  scale_y_log10() +
-  theme(axis.text.x = element_text(angle = 90, vjust = .5, hjust = .5))
+  geom_line(aes(x=periodo, y=kg/1000), color = "darkblue") +
+  labs(y = "",
+       x="",
+       title = "Produção (ton.)") +
+  scale_x_date(date_breaks = "1 year", date_labels = "%Y") +
+  scale_y_continuous(breaks = seq(0,500, 100),
+                     labels = paste0(seq(0,500, 100),"t"),
+                     limits = c(0,500)) +
+  theme_bw()
+
+
+kg <- corvina %>% 
+  #filter(ano > 2015) %>% 
+  group_by(pescado, periodo) %>%
+  mutate(kg = sum(kg))
+
+rt <- corvina %>% 
+  #filter(ano > 2015) %>% 
+  group_by(pescado, periodo) %>%
+  mutate(valor_estimado = sum(valor_estimado)) %>%
+  ggplot() +
+  geom_line(aes(x=periodo, y=valor_estimado/1000), color = "darkred") +
+  labs(y = "",
+       x="",
+       title = "Valor estimado (R$)") +
+  scale_x_date(date_breaks = "1 year", date_labels = "%Y") +
+  scale_y_continuous(breaks = seq(0,2000, 250),
+                     labels = paste0("R$", seq(0,2000, 250)),
+                     limits = c(0,2000)) +
+  theme_bw()
+
+preco <- corvina %>%
+  group_by(pescado, periodo) %>%
+  mutate(valor_estimado = sum(valor_estimado),
+         kg = sum(kg),
+         preco = valor_estimado / kg) %>%
+  ggplot() +
+  geom_line(aes(x = periodo, y = preco), color = "darkgreen") +
+  labs(y = "",
+       x="",
+       title = "Valor unitário (R$/Kg)") + 
+  scale_y_continuous(breaks = seq(0, 7.5, 1),
+                     labels = paste0("R$", seq(0, 7.5, 1), ",00"),
+                     limits = c(0, 7.5)) +
+  scale_x_date(date_breaks = '1 year', date_labels = "%Y") +
+  theme_bw()
 ```
+
+</details>
 
 ![](modelo_mqo_simples_files/figure-gfm/unnamed-chunk-2-1.png)<!-- -->
-
-``` r
-corvina %>%
-  filter(ano > 2007) %>%
-  ggplot() +
-  geom_jitter(aes(x = factor(mes), y = preco/10), show.legend = F, alpha=.1) +
-  geom_point(data = corvina %>% filter(ano > 2007) %>% group_by(mes) %>% summarise(preco_medio = mean(preco/10)),
-             aes(x = factor(mes), y = preco_medio),
-             color = "red", size = 3) +
-  scale_y_log10() +
-  theme(axis.text.x = element_text(angle = 90, vjust = .5, hjust = .5))
-```
-
-![](modelo_mqo_simples_files/figure-gfm/unnamed-chunk-3-1.png)<!-- -->
-
-``` r
-corvina %>%
-  ggplot() +
-  geom_smooth(aes(x = preco/10, y = kg/100), method = 'lm') +
-  geom_point(aes(x = preco/10, y = kg/100), alpha = .3, show.legend = F) +
-  scale_x_log10() +
-  scale_y_log10()
-```
-
-![](modelo_mqo_simples_files/figure-gfm/unnamed-chunk-4-1.png)<!-- -->
-
-``` r
-corvina %>% mutate(preco2 = valor_estimado / kg) %>%
-    ggplot() +
-  geom_smooth(aes(x = preco2/10, y = kg/100), method = 'lm') +
-  geom_point(aes(x = preco2/10, y = kg/100), alpha = .3, show.legend = F) +
-  scale_x_log10() +
-  scale_y_log10()
-```
-
-![](modelo_mqo_simples_files/figure-gfm/unnamed-chunk-5-1.png)<!-- -->
-
-``` r
-glimpse(corvina)
-```
-
-    ## Observations: 8,803
-    ## Variables: 12
-    ## $ ano                     <int> 1998, 1998, 1998, 1998, 1998, 1998, 19...
-    ## $ mes                     <int> 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2,...
-    ## $ municipio               <chr> "Cananéia", "Cananéia", "Cananéia", "C...
-    ## $ aparelho_de_pesca       <chr> "cerco-fixo", "emalhe-de-fundo", "espi...
-    ## $ nivel_taxonomico        <chr> "Peixe Ósseo", "Peixe Ósseo", "Peixe Ó...
-    ## $ pescado                 <chr> "Corvina", "Corvina", "Corvina", "Corv...
-    ## $ kg                      <dbl> 18, 1339, 13, 48, 4, 83, 35, 8, 12, 12...
-    ## $ qtd_descargas           <int> 3, 36, 2, 5, 1, 4, 1, 1, 5, 36, 3, 8, ...
-    ## $ qtd_unidades_produtivas <int> 1, 23, 1, 1, 1, 2, 1, 1, 5, 23, 3, 1, ...
-    ## $ valor_estimado          <dbl> 13.30, 1432.59, 9.10, 51.80, 2.80, 83....
-    ## $ periodo                 <date> 1998-01-01, 1998-01-01, 1998-01-01, 1...
-    ## $ preco                   <dbl> 4.433333, 39.794167, 4.550000, 10.3600...
