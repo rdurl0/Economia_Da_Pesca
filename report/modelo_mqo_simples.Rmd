@@ -73,11 +73,38 @@ Os dados utilizados são do Propesq.
 ```{r}
 library(tidyverse)
 library(kableExtra)
+library(lubridate)
 
 propesq <- "../data/propesq.rds" %>% read_rds()
 
+#BETSsearch(description = "IPCA", lang = 'pt')
+ipca_ts <- BETS::BETSget(code = "433")
+
+ipca <- tibble(ipca = as.numeric(ipca_ts) / 100,
+               periodo = seq(ymd('1980-01-01'), ymd('2020-03-01'), by = 'month')
+               )
+
+base <- c(100)
+base_100 <- c()
+
+for(i in 1:length(ipca$ipca)) {
+  
+  base_100 <- (1 + ipca$ipca[i]) * base[i]
+  
+  base <- c(base, base_100)
+}
+
+ipca <- ipca %>% mutate(base = base[-1])
+
 corvina <- propesq %>% 
-  filter(valor_estimado > 0 & pescado == "Corvina" & ano > 2007)
+  filter(valor_estimado > 0 & pescado == "Corvina" & ano > 2007) %>%
+  left_join(., ipca, by="periodo")
+
+ipca_jun2018 <- ipca %>% filter(periodo == as.Date("2018-06-01")) %>% pull(base)
+
+corvina <- corvina %>% 
+  mutate(valor_estimado_real = valor_estimado * ipca_jun2018 / base)
+
 
 qtd <- corvina %>% 
   #filter(ano > 2015) %>% 
@@ -103,31 +130,37 @@ kg <- corvina %>%
 rt <- corvina %>% 
   #filter(ano > 2015) %>% 
   group_by(pescado, periodo) %>%
-  mutate(valor_estimado = sum(valor_estimado)) %>%
+  mutate(valor_estimado_real = sum(valor_estimado_real),
+         valor_estimado_nominal = sum(valor_estimado)) %>%
   ggplot() +
-  geom_line(aes(x=periodo, y=valor_estimado/1000), color = "darkred") +
+  geom_line(aes(x=periodo, y=valor_estimado_real/1000), color = "darkred") +
+  geom_line(aes(x = periodo, y = valor_estimado_nominal/1000), color = "darkred", alpha=0.5) +
   labs(y = "",
        x="",
-       title = "Valor estimado (R$)") +
+       title = "Valor estimado (R$/mil)") +
   scale_x_date(date_breaks = "1 year", date_labels = "%Y") +
-  scale_y_continuous(breaks = seq(0,2000, 250),
-                     labels = paste0("R$", seq(0,2000, 250)),
-                     limits = c(0,2000)) +
+  scale_y_continuous(breaks = seq(0,2500, 250),
+                     labels = paste0("R$", seq(0,2500, 250)),
+                     limits = c(0,2500)) +
   theme_bw()
+
 
 preco <- corvina %>%
   group_by(pescado, periodo) %>%
-  mutate(valor_estimado = sum(valor_estimado),
+  mutate(valor_estimado_real = sum(valor_estimado_real),
+         valor_estimado = sum(valor_estimado),
          kg = sum(kg),
-         preco = valor_estimado / kg) %>%
+         preco_real = valor_estimado_real / kg,
+         preco_nominal = valor_estimado / kg) %>%
   ggplot() +
-  geom_line(aes(x = periodo, y = preco), color = "darkgreen") +
+  geom_line(aes(x = periodo, y = preco_real), color = "darkgreen") +
+  geom_line(aes(x = periodo, y = preco_nominal), color = "darkred", alpha=0.5) +
   labs(y = "",
        x="",
        title = "Valor unitário (R$/Kg)") + 
-  scale_y_continuous(breaks = seq(0, 7.5, 1),
-                     labels = paste0("R$", seq(0, 7.5, 1), ",00"),
-                     limits = c(0, 7.5)) +
+  scale_y_continuous(breaks = seq(0, 9.5, 1),
+                     labels = paste0("R$", seq(0, 9.5, 1), ",00"),
+                     limits = c(0, 9.5)) +
   scale_x_date(date_breaks = '1 year', date_labels = "%Y") +
   theme_bw()
 ```
@@ -136,7 +169,9 @@ preco <- corvina %>%
 
 ```{r fig.width=10, fig.height=15, echo=FALSE}
 library(patchwork)
+
 fig <- qtd / rt / preco
+
 fig + plot_annotation(
   title = 'Produção mensal da Corvina',
   subtitle = 'Período: Jan/2008 - Dez/2019',
@@ -144,5 +179,5 @@ fig + plot_annotation(
   theme = theme(plot.title = element_text(vjust = .5, hjust=.5),
                 plot.subtitle = element_text(vjust = .5, hjust=.5))
 )
-```
+ ```
 
