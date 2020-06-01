@@ -1,0 +1,578 @@
+---
+title: "Séries temporais"
+header-includes:
+- \usepackage{graphicx}
+- \usepackage{fancyhdr}
+- \usepackage{amsmath}
+- \usepackage{indentfirst}
+- \usepackage{booktabs}
+- \usepackage{longtable}
+- \usepackage{tabularx}
+- \usepackage{array}
+- \usepackage{multirow}
+- \usepackage{enumitem}
+- \usepackage{float}
+- \usepackage{colortbl}
+- \usepackage{pdflscape}
+- \usepackage{tabu}
+- \usepackage{threeparttable}
+- \usepackage{threeparttablex}
+- \usepackage[normalem]{ulem}
+- \usepackage{makecell}
+- \renewcommand{\contentsname}{Índice}
+- \numberwithin{equation}{section}
+- \usepackage{pdflscape}
+- \newcommand{\blandscape}{\begin{landscape}}
+- \newcommand{\elandscape}{\end{landscape}}
+- \usepackage[absolute]{textpos}
+- \usepackage{fancyhdr}
+- \usepackage{bm}
+output:
+  pdf_document:
+    toc: true
+    toc_depth: 4
+    latex_engine: xelatex
+    number_sections: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = TRUE,
+  warning = FALSE,
+  message = FALSE,
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+\fancypagestyle{mylandscape}{  %
+  \fancyhf{}                   % Clear header/footer
+  \fancyfoot{                  % Footer
+    \makebox[\textwidth][r]{   % Right
+      \rlap{\hspace{\footskip} % Push out of margin by \footskip
+        \smash{                % Remove vertical height
+          \raisebox{\dimexpr.7\baselineskip+\footskip+.7\textheight}{ % Raise vertically
+            \rotatebox{90}{\thepage}}}}}} % Rotate counter-clockwise
+  \renewcommand{\headrulewidth}{0pt}      % No header rule
+  \renewcommand{\footrulewidth}{0pt}      % No footer rule
+}
+
+
+\par\setlength{\parindent}{1.5em}
+
+
+# Conceitos-chave
+
+1. Processos estocásticos
+2. Processos estacionários
+3. Processos puramente aleatórios
+4. Processos não estacionários
+5. Variáveis integradas
+6. Modelos de passeios aleatórios
+7. Cointegração
+8. Tendência determinísticas e estocásticas
+9. Testes de raiz unitária
+
+# Introdução
+
+* Um processo aleatório ou estocástico é uma coleção de variáveis aleatórias ordenadas no tempo.
+
+* Notação:
+  + $Y(t)$ para variáveis aleatórias **contínuas**;
+  + $Y_t$ para variáveis aleatórias **discretas**.
+
+* Do mesmo modo que utilizamos as amostras de dados para extrair inferências sobre a população, em séries temporais nós utilizamos a **realização** para extrair inferências sobre o processo estocástico subjacente.
+
+* Uma série temporal **\underline{não} estacionária** terá uma *média que varia com o tempo, ou uma variância que varia com o tempo, ou, ainda, ambas.*
+
+* Uma série temporal **estacionária** permite generalizações com base no recorte de tempo escolhido para análise.
+
+* Um processo é **puramente aleatório** se ele tem média zero, variância constante $(\sigma^2)$ e é serialmente não correlacionado.
+
+# Processos estocásticos
+
+## Procesos estocásticos estacionários
+
+*A.K.A: processo estocástico fracamente estacionário, covariância-estacionário, estacionário de segunda orderm, sentido amplo*.
+
+Um processo estocástico será chamado de estacionário se sua média e variância forem constantes ao longo do tempo e o valor da covariância entre os dois períodos de tempo depender apenas da distância, do intervalo ou da defasagem entre os dois períodods e não o tempo real ao qual a covariância é computada.
+
+\begin{align}
+  && \text{\textbf{Média:}}       && E(Y_t)   &= \mu && \\
+  && \text{\textbf{Variância:}}   && var(Y_t) &= E(Y_t - \mu)^2 = \sigma^2 && \\
+  && \text{\textbf{Covariância:}} && \gamma_k &= E[(Y_t - \mu)(Y_{t+k} - \mu)]
+\end{align}
+
+ * Com $k=0$ obtemos $\gamma_0$ que é a variância de $Y(=\sigma^2)$.
+
+ * Com $k=1$ obtemos $\gamma_1$ que é a covariância de dois valores adjacentes (vizinhos) de $Y$.
+
+ * Com $k=m$ obtemos $\gamma_m$ que é a covariância de dois valores adjacentes (vizinhos) de $Y$.
+
+As condições acima descrevem um **processo estocástico fracamente estacionário** (a.k.a *covariância-estacionário*, *estacionário de segunda ordem*, *estacionário no sentido amplo*).
+
+Uma série temporal é **estritamente estacionária** se *todos* os momentos de sua distribuição de probabilidade, e não apenas a média e a variância, são invariantes ao longo do tempo. Se um processo estacionário form normal mas fracamente estacionário, ele também é considerado um processo estritamente estacionário por ser completamente especificado pelos seus dois momentos, a mádia e a variância.
+
+*Em resumo, se uma série temporal for estacionária, a média, a variãncia e autocovariância (em variadas defasagens) permanecerão as mesmas não importa em que ponto a mensuremos; isto é, elas serão invariantes no tempo.* Tal série temporal tenderá a retornar para sua média (reversão à média), e flutuações em torno dessa média (variãncia) tem, em geral, uma amplitude constante.
+
+## Processos estocásticos não estacionários
+
+Um processo estocástico não é estacionário se sua *média, variância (ou ambos) variam com o tempo*.
+
+**Modelo de passeio aleatório:** Um bêbado move-se numa distância aleatória $u_t$ no tempo $t$ e, continuando a caminhar indefinidamente, eventualmente se desviará cada vez mais do bar. Um exemplo é o preço das ações. O preço da ação de hoje é igual ao de ontem mais um choque aleatório. Eles não são estacionários.
+
+Dois tipos de passeio aleatório:
+
+1. Passeio aleatório \underline{sem} deslocamento: *termo constante ou intercepto*.
+2. Passeio aleatório \underline{com} deslocamento: *termo constante está presente*.
+ 
+### Passeio aleatório sem deslocamento
+
+*Segundo a hipótese da eficiência marginal do capital o preço das ações são essenciamente aleatórios e por conseguinte, não há margem para especulação lucrativa no mercado de ações. Se fosse possível alguma previsibilidade, então todos nós seríamos milionários! kkkk*
+
+Se $u_t$ é um termo de *puramente aleatório* com média zero e variância $\sigma^2$. O valor de $Y$ no tempo $t$ é igual ao seu valor no tempo anterior $(t-1)$ mais um choque aleatório $u_t$:
+
+\begin{align}
+  Y_t = Y_{t-1} + u_t
+\end{align}
+
+A equação anterior é um modelo **auto regressivo (AR)**, onde $Y$ é regredido no tempo $t$ sobre seu valor defasado em um período. Com base no modelo autorregressivo, podemos desenvolver:
+
+\begin{align}
+  Y_1 &= Y_0 + u_1 \\
+  Y_2 &= Y_1 + u_2 = Y_0 + u_1 + u_2 \\
+  Y_3 &= Y_2 + u_3 = Y_0 + u_1 + u_2 + u_3
+\end{align}
+
+Em geral, temos a *persistência de choques aleatórios*, onde $Y_t$ é a soma do $Y_0$ inicial mais a soma dos choques aleatórios. Um choque ocorrido em, digamos $u_2$ não se extingue. É por isso que se diz que o passeio aleatório tem *memória infinita*.
+
+\begin{align}
+  Y_t &= Y_0 + \sum{u_t}
+\end{align}
+
+A média de $Y$ é, portanto, o seu valor inicial ou de partida. A soma $\sum u_t$ também é conhecida como **tendência estocástica**.
+ 
+\begin{align}
+  E(Y_t) &= E(Y_t + Y_0 + \sum{u_t}) = Y_0
+\end{align}
+
+Mas, como $t$ aumenta, sua variância aumenta indefinidamente, violando uma condição de estacionariedade. O Modelo de Passeio Aleatório sem deslocamento é um processo estocástico não estacionário.
+
+\begin{align}
+  var(Y_t) &= t\sigma^2
+\end{align}
+
+**A primeira diferênça de um passeio aleatório é estacionário**. Reescrevendo a equação (1) temos $\Delta$ como o primeiro operador de diferenças. As primeiras diferenças de séries temporais são estacionárias:
+
+\begin{align}
+  (Y_t - Y_{t-1}) = \Delta Y_t = u_t
+\end{align}
+
+### Passeio aleatório com deslocamento
+
+O passeio aleatório é uma generalização do caso sem deslocamento. Alterando a equação (1) com um **parâmetro de deslocamento** $\delta$ temos:
+
+\begin{align}
+  Y_t = \delta + Y_{t-1} + u_t
+\end{align}
+
+Onde este parâmetro de deslocamento desloca $Y_t$ para cima ($\delta > 0$) ou para baixo ($\delta < 0$). Isso é demonstrado reescrevendo a equação anterior:
+
+\begin{align}
+  Y_t - Y_{t-1} = \Delta Y_t = \delta + u_t
+\end{align}
+
+Note que o passeio aleatorio sem deslocamento é apenas um caso particular dessa demonstração, onde o parâmetro de deslocamento é igual a zero. Para o modelo de passeio aleatório com deslocamento demonstramos também a violação de condições de estacionariedade (fraca).
+
+\begin{align}
+  E(Y_t) = Y_0 + t \delta \\
+  var(Y_t) = t \sigma^2
+\end{align}
+
+```{r echo=FALSE, fig.align='center', fig.height=3, fig.width=9}
+library(tidyverse)
+library(patchwork)
+
+ts_generate <- function(seed = 420) {
+  
+  set.seed(seed)
+  
+  ## length of time series
+  TT <- 500
+  
+  ## initialize {y_t} and {u_t}
+  yy <- uu <- rnorm(n = TT, mean = 0, sd = 1)
+  
+  ## compute values 2 thru TT
+  for (t in 2:TT) {
+      yy[t] <- yy[t - 1] + uu[t]
+  }
+  
+  my_ts <- tibble(Y = ts(yy),
+                Time = time(ts(yy)),
+                desloc = 2)
+  
+  return(my_ts)
+
+}
+
+a <- ts_generate() %>%
+  ggplot() +
+  geom_line(aes(y=Y, x=Time,)) +
+  labs(x = expression(Y[t] == Y[t-1] + u[t]),
+       y = expression(Y),
+       title = "Um passeio aleatório sem deslocamento") +
+  geom_hline(yintercept = 0, lty = 2) +
+  scale_x_continuous(expand = c(0,0), limits=c(0,502), breaks=seq.int(0,550,50), labels =c("",seq.int(50,550,50))) +
+  scale_y_continuous(expand = c(0,0),limits=c(-35,25), breaks=seq.int(-35,25,10), labels =seq.int(-35,25,10) ) +
+  theme_bw() +
+  theme(plot.title = element_text(hjust = .5, vjust = .5, family="serif", size = 12),
+        axis.text.x  = element_text(hjust = .5, family="serif"),
+        axis.title.x = element_text(hjust = .5, family="serif"),
+        axis.text.y  = element_text(family="serif"),
+        axis.title.y = element_text(hjust = .5, family="serif"),
+        axis.line = element_line(size = .2),
+        #panel.border = element_blank(),
+        panel.grid = element_blank())
+
+b <- ts_generate(054) %>%
+  ggplot() +
+  geom_line(aes(y=Y, x=Time,)) +
+  labs(x = expression(Y[t] == 2 + Y[t-1] + u[t]),
+       y = expression(Y),
+       title = "Um passeio aleatório com deslocamento") +
+  geom_hline(yintercept = 0, lty = 2) +
+  scale_x_continuous(expand = c(0,0), limits=c(0,502), breaks=seq.int(0,550,50), labels =c("",seq.int(50,550,50))) +
+  scale_y_continuous(expand = c(0,0),limits=c(-25,10), breaks=seq.int(-25,10,5), labels =seq.int(-25,10,5) ) +
+  theme_bw() +
+  theme(plot.title = element_text(hjust = .5, vjust = .5, family="serif", size = 12),
+        axis.text.x  = element_text(hjust = .5, family="serif"),
+        axis.title.x = element_text(hjust = .5, family="serif"),
+        axis.text.y  = element_text(family="serif"),
+        axis.title.y = element_text(hjust = .5, family="serif"),
+        axis.line = element_line(size = .2),
+        #panel.border = element_blank(),
+        panel.grid = element_blank())
+
+a | b
+```
+
+## Processos estocásticos de raiz unitária
+
+Escrevemos o modelo autorregressivo como:
+
+\begin{align}
+  Y_t &= \rho Y_{t-1} + u_t && -1 \leq \rho \leq 1 
+\end{align}
+
+* Sabemos que esse é um modelo é \underline{não} estacionário, com variância de $Y_t$ não estacionária.
+
+* Se $\rho = 1$ então o modelo é simplesmente um modelo de passeio aleatório sem deslocamento como descrito anteriormente. $\rho = 1$ é o que é conhecido como **problema de raiz unitária**.
+
+* Se $\lvert \rho \rvert < 1$, é possível demonstrar que a série temporal $Y_t$ é estacionária.
+
+* Se o valor inicial de $Y(=Y_0)$ é zero, $\lvert \rho \rvert < 1$, e $X \sim \mathcal{N}(0,\,\sigma^{2})$. Segue-se que $E(Y_t) = 0$ e $var(Y_t) = \frac{1}{1 - \rho^2}$. Como ambos os termos são constante, então, pela definição de estacionariedade fraca,  $Y_t$ é estacionária.
+
+## Processos estocásticos de tendencia estacionária (TE) e diferença estacionária (DE)
+
+**Tendência:** lenta evolução de longo prazo da série temporal em consideração. A estacionáriedade é relevante para explicar a tendência da série temporal.
+
+Uma série temporal é uma função determinística de tempo, como o tempo, tempo ao quadrado, etc. Caso contrário, se uma série de tempo é previsível, então temos uma tendência chamada de estocástica. Considere a série temporal:
+
+\newcommand{\seriecheia}{Y_t = \beta_1 + \beta_2 t + \beta_3 Y_{t-1} + u_t}
+
+\begin{align}
+  \seriecheia \label{serie_cheia}
+\end{align}
+
+em que $u_t$ é o termo de ruído puramente aleatório e $t$ é o tempo. A diferênça entre tendências **estocásticas** e **determinísticas** pode ser vista na figura acima. A série estocástica é gerada por um modelo de passeio aleatório com deslocamento: $Y_t = 0,5 + Y_{t-1} + u_{t}$, em que 500 valores de $u_t$ foram gerados de uma distribuição padrão normal e o valor inicial de $Y$ foi estabelecido como $1$. A série chamada determinística é gerada da seguinte maneira: $Y_t = 0,5t + u_t$ em que $u_t$ foi gerado como o acima e $t$ refere-se ao tempo medido cronológicamente.
+
+<!-- # Passeio aleatório Puro: -->
+
+\newcommand{\passeioaleatoriopuro}{Y_t = Y_{t-1} + u_t}
+\newcommand{\passeioaleatoriopurodiff}{\Delta Y_t = u_t}
+
+<!-- # Passeio aleatório com delocamento: -->
+
+\newcommand{\passeioaleatoriodesl}{Y_t = \beta_1 + Y_{t-1} + u_t}
+\newcommand{\passeioaleatoriodesldiff}{\Delta Y_t = \beta_1 + u_t}
+
+<!-- # Tendência determinística: -->
+
+\newcommand{\tendenciadeterm}{Y_t = \beta_1 + \beta_2 t + u_t}
+
+<!-- # Passeio aleatório com deslocamento e tendência determinística -->
+
+\newcommand{\tendenciadetermdesl}{Y_t = \beta_1 + \beta_2 t + Y_{t-1} + u_t}
+\newcommand{\tendenciadetermdesldiff}{\Delta Y_t = \beta_1 + \beta_2t + u_t}
+
+<!-- # Tendência determinística com componente autorregressivo AR(1) estacionário -->
+
+\newcommand{\tendenciadetermAR}{Y_t = \beta_1 + \beta_2 t + \beta_3 Y_{t-1} + u_t}
+
+```{r echo = FALSE, fig.align='center', fig.height=4, fig.width=5}
+
+z <- function(seed) {
+set.seed(seed)
+
+TT <- 500
+uu <- rnorm(TT, sd = 2)
+
+y_est <- 1
+for (t in 2:TT) {
+  
+  y_est[t] <- 0.5 + y_est[t - 1] + uu[t]
+  
+}
+
+estocastica <- tibble(
+  Y = ts(y_est),
+  t = time(ts(y_est)),
+  tipo = "Estocástica"
+)
+
+y_det <- 0.5*(1:TT) + uu
+
+deterministica <- tibble(
+  Y = ts(y_det),
+  t = time(ts(y_det)),
+  tipo = "Deterministica"
+)
+
+  
+  p <- ggplot() +
+    geom_line(data = estocastica, aes(x = t/10, y = Y/10)) +
+    geom_line(data = deterministica, aes(x = t/10, y = Y/10)) +
+    geom_hline(yintercept = 0, size = .2) +
+    geom_text(aes(x = 10, y = 9, label = "Estocástica"), family = "serif") +
+    geom_text(aes(x = 15, y = 5, label = "Deterministica"), family = "serif") +
+    labs(x="Tempo", y=NULL, title = "Tendência deterministica versus tendência estocástica", color = NULL) +
+    scale_x_continuous(expand = c(0,0), limits = c(0,35)) +
+    scale_y_continuous(expand = c(0,0),limits = c(-5,22), breaks = seq.int(-5,20,5))+
+  theme_bw() +
+  theme(plot.title = element_text(hjust = .5, vjust = .5, family = "serif", size = 12),
+        axis.text.x  = element_blank(),
+        axis.title.x = element_text(hjust = .5, family = "serif"),
+        axis.ticks.x = element_blank(),
+        axis.text.y  = element_text(family = "serif"),
+        axis.title.y = element_text(hjust = .5, family = "serif"),
+        axis.line = element_line(size = .2),
+        panel.grid = element_blank(),
+        legend.position = c(0.2, 0.8))
+    
+  return(p)
+
+
+  
+}
+
+z(27)
+```
+
+
+ * No caso da **tendência determinística**, os desvios a partir da linha de tendência são puramente aleatórios e terminam rapidamente; eles não contribuem para o desnvolvimento a longo prazo da série temporal, que é determinada pelo componente tendencial $0,5t$. 
+
+ * Já no caso da **tendência estocástica**, por outro lado, o componente aleatório $u_t$ afeta o curso de longo prazo da série $Y_t$.
+
+ Com o modelo apresentado em \eqref{serie_cheia}, temos as possibilidades:
+
+```{r echo=FALSE}
+
+tabela_resumo <- list(
+  id = c(1,2,3,4,5),
+  `Classificação` = c(
+    "Passeio aleatório puro",
+    "Passeio aleatório com deslocamento",
+    "Tendencia determinística",
+    "Passeio aleatório com deslocamento e tendência determinística",
+    "Tendência determinística com componente autorregressivo AR(1) estacionário"
+    ),
+  `Descrição` = c(
+    "Processo estacionário, sem deslocamento, em diferença (PED) com $\\passeioaleatoriopurodiff$",
+    "Tendência estocástica com $\\passeioaleatoriodesldiff$",
+    "Processo de tendência estacionária (PTE) após remoção de tendência ($E(Y_t) - Y_t$)",
+    "$\\tendenciadetermdesldiff$",
+    "Estacionário em tendência determinística"
+    ),
+  Modelo = c(
+    "$\\passeioaleatoriopuro$",
+    "$\\passeioaleatoriodesl$",
+    "$\\tendenciadeterm$",
+    "$\\tendenciadetermdesl$",
+    "$\\tendenciadetermAR$"
+    ),
+  `$\\beta_1$` = c("$=0$", "$\\neq 0$", "$\\neq 0$", "$\\neq 0$", "$\\neq 0$"),
+  `$\\beta_2$` = c("$=0$", "$=0$"     , "$\\neq 0$", "$\\neq 0$", "$\\neq 0$"),
+  `$\\beta_3$` = c("$=1$", "$=0$"     , "$=0$"     , "$=1$"     , "$< 0$")
+  ) %>%
+  map_dfc(~rep(.x,2)) %>%
+  arrange(id)
+```
+
+```{r echo=FALSE}
+library(kableExtra)
+tbl_tex <- tabela_resumo %>%
+  mutate(
+    `Classificação` = cell_spec(`Classificação`, escape = F, "latex", font_size = 6),
+    `Descrição` = cell_spec(`Descrição`, escape = F, "latex", font_size = 6),
+    `$\\beta_1$`= cell_spec(`$\\beta_1$`, escape = F, "latex", font_size = 6),
+    `$\\beta_2$`= cell_spec(`$\\beta_2$`, escape = F, "latex", font_size = 6),
+    `$\\beta_3$`= cell_spec(`$\\beta_3$`, escape = F, "latex", font_size = 6)
+         ) %>%
+  kable(format = "latex", booktabs = T, escape = F, align = 'ccllccc') %>%
+   kable_styling(full_width = F,latex_options = "scale_down" ) %>%
+   column_spec(5:7, width = "1.5em") %>%
+   column_spec(3, width = "14em") %>%
+   column_spec(2, width = "12em", bold = T, ) %>%
+   column_spec(1, width = "0.4em")  %>%
+   row_spec(0, bold = T, align = 'c') %>%
+   collapse_rows(columns = c(1:4), latex_hline = "major", valign = "middle") %>%
+   add_header_above(c("Variações no modelo $\\\\seriecheia$" = 7), escape = F)
+```
+
+
+\begin{landscape}
+
+\thispagestyle{mylandscape}
+
+\begin{table}[H]
+\centering
+\resizebox{\linewidth}{!}{
+\begin{tabular}{>{\centering\arraybackslash}p{0.2em}>{\bfseries\centering\arraybackslash}p{10em}>{\raggedright\arraybackslash}p{17em}l>{\centering\arraybackslash}p{1.0em}>{\centering\arraybackslash}p{1.0em}>{\centering\arraybackslash}p{1.0em}}
+
+\toprule
+
+\multicolumn{7}{c}{\multirow{2}{*}{\textbf{Variações no modelo:} $\seriecheia$}} \\ \\
+\midrule
+
+
+\multicolumn{1}{>{\centering\arraybackslash}p{0.2em}}{} & \multicolumn{1}{>{\centering\arraybackslash}p{10em}}{\textbf{Classificação}} & \multicolumn{1}{>{\raggedright\arraybackslash}p{18em}}{\textbf{Descrição}} & \multicolumn{1}{l}{\textbf{Modelo}} & \multicolumn{1}{>{\centering\arraybackslash}p{1.0em}}{\textbf{$\beta_1$}} & \multicolumn{1}{>{\centering\arraybackslash}p{1.0em}}{\textbf{$\beta_2$}} & \multicolumn{1}{>{\centering\arraybackslash}p{1.0em}}{\textbf{$\beta_3$}}\\
+
+\midrule
+ &  &  &  &  &  & \\
+ &  &  &  &  &  & \\
+ &  &  &  &  &  & \\
+
+\multirow{-4}{0.2em}{\centering\arraybackslash 1} & \multirow{-4}{10em}{\centering\arraybackslash \bgroup\fontsize{6}{8}\selectfont Passeio aleatório puro\egroup{}} & \multirow{-4}{18em}{\raggedright\arraybackslash \bgroup\fontsize{6}{8}\selectfont Processo estacionário, sem deslocamento, em diferença (PED) com $(Y_t - Y_{t-1}) = \passeioaleatoriopurodiff$. \egroup{}} & \multirow{-4}{*}{\raggedright\arraybackslash \bgroup\fontsize{6}{8}\selectfont $\passeioaleatoriopuro$ \egroup{}} & \multirow{-4}{1.0em}{\centering\arraybackslash \bgroup\fontsize{6}{8}\selectfont $=0$\egroup{}} & \multirow{-4}{1.0em}{\centering\arraybackslash \bgroup\fontsize{6}{8}\selectfont $=0$\egroup{}} & \multirow{-4}{1.0em}{\centering\arraybackslash \bgroup\fontsize{6}{8}\selectfont $=1$\egroup{}}\\
+
+\cmidrule{1-7}
+ &  &  &  &  &  & \\
+ &  &  &  &  &  & \\
+ &  &  &  &  &  & \\
+ 
+\multirow{-4}{0.2em}{\centering\arraybackslash 2} & \multirow{-4}{10em}{\centering\arraybackslash \bgroup\fontsize{6}{8}\selectfont Passeio aleatório com deslocamento\egroup{}} & \multirow{-4}{18em}{\raggedright\arraybackslash \bgroup\fontsize{6}{8}\selectfont Tendência estocástica com $\passeioaleatoriodesldiff$. $Y_t$ exibirá uma tendência positiva, se $\beta_1 >0$ ou negativa, se $\beta_1 < 0$.\egroup{}} & \multirow{-4}{*}{\raggedright\arraybackslash \bgroup\fontsize{6}{8}\selectfont $\passeioaleatoriodesl$ \egroup{}} & \multirow{-4}{1.0em}{\centering\arraybackslash \bgroup\fontsize{6}{8}\selectfont $\neq 0$\egroup{}} & \multirow{-4}{1.0em}{\centering\arraybackslash \bgroup\fontsize{6}{8}\selectfont $=0$\egroup{}} & \multirow{-4}{1.0em}{\centering\arraybackslash \bgroup\fontsize{6}{8}\selectfont $=0$\egroup{}} \\
+
+\cmidrule{1-7}
+ &  &  &  &  &  & \\
+ &  &  &  &  &  & \\
+ &  &  &  &  &  & \\
+ 
+\multirow{-4}{0.2em}{\centering\arraybackslash 3} & \multirow{-4}{10em}{\centering\arraybackslash \bgroup\fontsize{6}{8}\selectfont Tendencia determinística\egroup{}} & \multirow{-4}{18em}{\raggedright\arraybackslash \bgroup\fontsize{6}{8}\selectfont Processo de tendência estacionária (PTE) após remoção de tendência ($E(Y_t) - Y_t$).  $E(Y_t) = \beta_1 + \beta_2t$ não é constânte, mas a variância é $(= \sigma^2)$. Com $\beta_1$ e $\beta_2$ conhecidos, a média pode ser prevista.\egroup{}} & \multirow{-4}{*}{\raggedright\arraybackslash \bgroup\fontsize{6}{8}\selectfont $\tendenciadeterm$ \egroup{}} & \multirow{-4}{1.0em}{\centering\arraybackslash \bgroup\fontsize{6}{8}\selectfont $\neq 0$\egroup{}} & \multirow{-4}{1.0em}{\centering\arraybackslash \bgroup\fontsize{6}{8}\selectfont $\neq 0$\egroup{}} & \multirow{-4}{1.0em}{\centering\arraybackslash \bgroup\fontsize{6}{8}\selectfont $=0$\egroup{}} \\
+
+\cmidrule{1-7}
+ &  &  &  &  &  & \\
+ &  &  &  &  &  & \\
+ &  &  &  &  &  & \\
+ 
+\multirow{-4}{0.2em}{\centering\arraybackslash 4} & \multirow{-4}{10em}{\centering\arraybackslash \bgroup\fontsize{6}{8}\selectfont Passeio aleatório com deslocamento e tendência determinística\egroup{}} & \multirow{-4}{18em}{\raggedright\arraybackslash \bgroup\fontsize{6}{8}\selectfont Reescrevendo a equação fica demonstrado tanto o deslocamento (em $\beta_1$) e a tendência determinística (em $\beta_2 t$): $\tendenciadetermdesldiff$ \egroup{}} & \multirow{-4}{*}{\raggedright\arraybackslash \bgroup\fontsize{6}{8}\selectfont $\tendenciadetermdesl$ \egroup{}} & \multirow{-4}{1.0em}{\centering\arraybackslash \bgroup\fontsize{6}{8}\selectfont $\neq 0$\egroup{}} & \multirow{-4}{1.0em}{\centering\arraybackslash \bgroup\fontsize{6}{8}\selectfont $\neq 0$\egroup{}} & \multirow{-4}{1.0em}{\centering\arraybackslash \bgroup\fontsize{6}{8}\selectfont $=1$\egroup{}} \\
+
+\cmidrule{1-7}
+ &  &  &  &  &  & \\
+ &  &  &  &  &  & \\
+ &  &  &  &  &  & \\
+ 
+\multirow{-4}{0.2em}{\centering\arraybackslash 5} & \multirow{-4}{10em}{\centering\arraybackslash \bgroup\fontsize{6}{8}\selectfont Tendência determinística com componente autorregressivo AR(1) estacionário\egroup{}} & \multirow{-4}{18em}{\raggedright\arraybackslash \bgroup\fontsize{6}{8}\selectfont Estacionário em torno de uma tendência determinística \egroup{}} & \multirow{-4}{*}{\raggedright\arraybackslash \bgroup\fontsize{6}{8}\selectfont $\tendenciadetermAR$ \egroup{}} & \multirow{-4}{1.0em}{\centering\arraybackslash \bgroup\fontsize{6}{8}\selectfont $\neq 0$\egroup{}} & \multirow{-4}{1.0em}{\centering\arraybackslash \bgroup\fontsize{6}{8}\selectfont $\neq 0$\egroup{}} & \multirow{-4}{1.0em}{\centering\arraybackslash \bgroup\fontsize{6}{8}\selectfont $< 0$\egroup{}} \\
+
+\bottomrule
+\end{tabular}}
+\end{table}
+
+\end{landscape}
+
+
+## Processos estocásticos integrados:
+
+Anteriormente vimos casos em que a estacionáriedade da série temporal é obtida já na primeira diferença. Quando isso ocorre, dizemos que trata-se de um processo **integrado de ordem 1**, ou $\mathcal{I(1)}$. Mas nem sempre é assim, para algumas séries temporais, a estacionariedade é obtida na segunda, terceita ou $d$-ésima ordem.
+
+Por exemplo, se $Y_t$ é um processo integrado de ordem 2, $\mathcal{I}(2)$, então ela será estácionária na segunda diferença:
+
+\begin{align}
+  && \Delta \Delta Y_t &= \Delta Y_t - \Delta Y_{t-1} && \\
+  &&                   &= Y_t - 2Y_{t-1} + Y_{t-2}    &&
+\end{align}
+
+Em geral, se uma série temporal (não estacionária) precisa ser diferenciada $d$ vezes para se tornar estacionária, denominamos essa série temporal **integrada de ordem $d$**. Uma série temporal $Y_t$ integrada de orfem $d$ denota-se como $Y_{(d)} \sim \mathcal{I_{(d)}}$.
+
+Se uma série temporal $Y_t$ é estacionária dede o início (não requer diferenciação), então ela é integrada de ordem zero, denotada por $Y_t \sim \mathcal{I(0)}$.
+
+### Propriedade das séries integradas
+
+Seja $X_t$, $Y_t$ e $Z_t$ três séries temporais:
+
+  1. Se $X_t \sim \mathcal{I(0)}$ e $Y_t \sim \mathcal{I(1)}$, então $Z_t = (X_t + Y_t) = \mathcal{I(1)}$;
+  2. Se $X_t \sim \mathcal{I(d)}$, então $Z_t = (a + b X_t) = \mathcal{I(d)}$, em que $a$ e $b$ são constantes;
+  3. Se $X_t \sim \mathcal{I(d_1)}$ e $Y_t \sim \mathcal{I(d_2)}$, então $Z_t = (aX_t + bY_t) \sim \mathcal{I(d_2)}$, em que $d_1 < d_2$;
+  4. Se $X_t \sim \mathcal{I(d)}$ e $Y_t \sim \mathcal{I(d)}$, então $Z_t = (aX_t + bY_t) \sim \mathcal{I(d_{*})}$, onde $d_{*}$ normalmente é igual a $d$, mas em alguns casos, $d_{*} < d$.
+  
+## O fenômeno da regressão espúria
+
+Considere os dois modelos de passeio aleatório a seguir:
+
+\begin{align}
+  && Y_t &= Y_{t-1} + u_t && \\
+  && X_t &= X_{t-1} + v_t &&
+\end{align}
+
+Onde $u \sim \mathcal{N(0,1)}$ e $v \sim \mathcal{N(0,1)}$e os valores iniciais de $X$ e $Y$ são zero, $u$ e $v$ são serialmente não correlacionados, bem como mutuamente não correlacionados. Uma vez que $Y_t$ e $X_t$ são não correlacionados e estacionários de ordem ' ($\mathcal{I(1)}$), o $R^2$ de uma regressão de $Y_t$ em relação a $X_t$ deveria tender a zero, o que não ocorre:
+
+
+```{r echo=FALSE}
+TT <- 500
+
+u <- rnorm(TT)
+v <- rnorm(TT)
+
+y <- 0
+x <- 0
+
+for (t in 2:TT) {
+  
+  x[t] <- x[t - 1] + u[t]
+  y[t] <- y[t - 1] + v[t]
+  
+}
+
+reg <- lm(y ~ x)
+dwats <- car::durbinWatsonTest(reg)
+
+reg$d <- dwats$dw
+reg2 <- summary(reg)
+reg2$d <- dwats$dw
+
+tb_reg <- coef(reg2)[,1:3] %>%
+  as_tibble() %>%
+  bind_rows(., tibble(Estimate = reg2$r.squared, `Std. Error` = NA, `t value` = NA)) %>%
+  bind_rows(., tibble(Estimate = reg2$d, `Std. Error` = NA, `t value` = NA)) %>%
+  mutate(Variable = c("Intercept", "$X$", "$R^2$", "$d$")) %>%
+  select(Variable, everything()) %>%
+  kable(format = "latex", booktabs = T, escape = F, align = 'lrrr', digits = 3) %>%
+  kable_styling(full_width = F)  %>%
+  collapse_rows(columns = c(2:4), latex_hline = "major", valign = "middle") 
+
+```
+
+\begin{table}[H]
+\centering
+\begin{tabular}{lrrr}
+\toprule
+Variable & Estimate & Std. Error & t value\\
+\midrule
+Intercept & 18.534 & 0.486 & 38.127\\
+$X$ & 0.218 & 0.022 & 9.871\\
+\cmidrule{1-4}
+\multicolumn{4}{c}{$R^2 = 0.164$ \hspace{1.2cm} $d = 0.026$} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+O resultado é um $X$ com significância estatística e $R^2$ diferente d zero. Essa é a característica principal do **fenômeno de regressão espúria ou sem sentido**. Podemos adotar a regra de bolso: *uma $R^2$ é uma boa regra de bolso para suspeitar que a regressão estimada seja espúria*.
